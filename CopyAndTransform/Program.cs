@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using MySql.Data.Types;
 using MySql.Data;
+using System.Data.SqlClient;
+using Microsoft.SqlServer;
 
 namespace CopyAndTransform
 {
@@ -15,74 +17,84 @@ namespace CopyAndTransform
         static void Main(string[] args)
         {
             Console.WriteLine("hello this will copy and transform ");
-            
+
 
             EvilTransform.Transform transformer = new EvilTransform.Transform();
-            EvilTransform.PointLatLng[][] tests = new EvilTransform.PointLatLng[][]{
-            new EvilTransform.PointLatLng[]{new EvilTransform.PointLatLng(31.1774276, 121.5272106), new EvilTransform.PointLatLng(31.17530398364597, 121.531541859215)}};//shanghai
+            EvilTransform.PointLatLng WGSpoint = new EvilTransform.PointLatLng();
 
-            EvilTransform.PointLatLng result = new EvilTransform.PointLatLng(); 
-            result = transformer.GCJ2WGSExact(31.1774276,  121.5272106);
-            Console.WriteLine(result.Lat);
-            Console.WriteLine(result.Lng);
-
-            int x = 0;
+            int finished = 0;
             while (true)
             {
-                x = x + 1;
+                Console.WriteLine((finished*1000).ToString() + " finished");
+                
 
                 //Get Harvester AppKeys
-                Coordiante<Int64, String, String> CList = WeiboMySQL.GetCoordinates();
+                Coordiante<Int64, double, double> CList = SQLServer.GetCoordinates();
                 int c = CList.Count();
-                if (c == 0) {
-                    Console.WriteLine("MySQL does not deliver any records!!");
-                    
-                    continue;
-                }
-
-                //for (int i = 0; i < c; i++)
-                //{
-                //    Console.WriteLine(CList[i].Item1 + "\t" +
-                //                      CList[i].Item2 + "\t" +
-                //                      CList[i].Item3 
-                //                      );
-                //}
-
-                string update = "";
-                MySqlConnection conn = new MySqlConnection(Properties.Settings.Default.connectionstring);
-                MySqlCommand cmdUPDATE = new MySqlCommand();
-                cmdUPDATE.Connection = conn;
-                try{
-                conn.Open();
-                for (int i = 0; i < c; i++)
+                if (c == 0)
                 {
-                    double geoLAT = Convert.ToDouble(CList[i].Item2);
-                    double geoLOG = Convert.ToDouble(CList[i].Item3);
-                    result = transformer.GCJ2WGSExact(geoLAT, geoLOG);
+                    Console.WriteLine("SQL does not deliver any records!!");
 
-                    update = "UPDATE nearbytimelinetransformed SET WGSgeoLAT = '" + result.Lat.ToString() + "', WGSgeoLog = '" + result.Lng.ToString() + "' where msgID = '" + CList[i].Item1.ToString() + "';";
-                    
-                    cmdUPDATE.CommandText = update;
-                    cmdUPDATE.ExecuteNonQuery();
-                    Console.WriteLine(((x*c)+i+1).ToString() + " records done \t" + CList[i].Item1.ToString() + " Evil LAT/LOG " + geoLAT + " / " + geoLOG + " to ===> " + result.Lat.ToString() + " / " + result.Lng.ToString());
-                }
-                conn.Close();
-                }catch(Exception ex){
-                    Console.Write(ex);
                     continue;
                 }
+                int x = CList.Count();
+                //for (int i = 0; i < x; i++)
+                //{
+
+                //    Console.WriteLine(i.ToString() + "\t" +
+                //        CList[i].Item1 + "\t" +
+                //                      CList[i].Item2 + "\t" +
+                //                      CList[i].Item3
+                //                      );
+                    
+                //}
+                //Console.WriteLine(x.ToString()+ " Records.");
 
 
+                //CONNECT
+                SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
+                try
+                {
+                    myConnection.Open();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
+
+                //UPDATE
+                try
+                {
+                    
+                    for (int i = 0; i < CList.Count(); i++)
+                    {
+                        double badLat = CList[i].Item2;
+                        double badLog = CList[i].Item3;
+                        WGSpoint = transformer.GCJ2WGSExact(badLat, badLog);
+                        string s = "UPDATE [weibo].[dbo].[NBT2] set [WGSLatitudeX]=" + WGSpoint.Lat + ", [WGSLongitudeY]=" + WGSpoint.Lng + ", [location]=geography::STPointFromText('POINT (" + WGSpoint.Lng + " " + WGSpoint.Lat + ")',4326) WHERE [idNearByTimeLine]=" + CList[i].Item1 + ";";
+                        //Console.WriteLine(i.ToString());
+                        
+                        SqlCommand update = new SqlCommand(s, myConnection);
+                        update.ExecuteNonQuery();
+                        
+                    }
+
+                    finished = finished + 1;  
+                    Console.Beep(200, 50);
+
+
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
+                myConnection.Close();
             }
-
-            Console.WriteLine("Finished!");
-            Console.ReadLine();
-
-
-
-
         }
     }
+
+    
 
     class WeiboMySQL
     {
@@ -94,7 +106,7 @@ namespace CopyAndTransform
             var CoordinateList = new Coordiante<Int64, String, String> { };
 
             //MySQL connection
-            MySqlConnection MSQconn = new MySqlConnection(Properties.Settings.Default.connectionstring);
+            MySqlConnection MSQconn = new MySqlConnection(Properties.Settings.Default.MSSQL);
             MySqlCommand MSQcommand = MSQconn.CreateCommand();
 
             MSQcommand.CommandText = query;
@@ -124,6 +136,60 @@ namespace CopyAndTransform
                 Console.Write(ex.ToString());
                 Console.WriteLine(ex.Message);
             }
+            return CoordinateList;
+        }
+
+    }
+
+    class SQLServer
+    {
+        static public Coordiante<Int64, double, double> GetCoordinates()
+        {
+            
+            //Create a list to store the result
+            var CoordinateList = new Coordiante<Int64, double, double> { };
+
+            //CONNECT
+            SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
+            try
+            {
+                myConnection.Open();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+            //READ
+            try
+            {
+                SqlDataReader myReader = null;
+                SqlCommand myCommand = new SqlCommand("SELECT TOP 1000 [idNearByTimeLine],[geoLAT],[geoLOG] FROM [weibo].[dbo].[NBT2] Where [location] is NULL;",
+                                                         myConnection);
+                
+                myReader = myCommand.ExecuteReader();
+                while (myReader.Read())
+                {
+                    //Console.Write(myReader["RandomID"].ToString() + "\t");
+                    //Console.Write(myReader["TimesHarvested"].ToString() + "\t");
+                    //Console.Write(myReader["TotalCollected"].ToString() + "\t");
+                    //Console.Write(myReader["TotalInserted"].ToString() + "\t");
+                    //Console.Write(myReader["LAT"].ToString() + "\t");
+                    //Console.Write(myReader["LON"].ToString() + "\t");
+                    //Console.Write(myReader["ratio"].ToString() + "\n");
+
+                    CoordinateList.Add(Convert.ToInt32(myReader["idNearByTimeLine"]),          //Item1
+                                    Convert.ToDouble(myReader["geoLAT"]),    //Item2
+                                    Convert.ToDouble(myReader["geoLOG"]));   //Item3
+                }
+                myReader.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+            myConnection.Close();
             return CoordinateList;
         }
 
