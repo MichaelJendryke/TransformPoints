@@ -25,11 +25,11 @@ namespace CopyAndTransform
             int finished = 0;
             while (true)
             {
-                Console.WriteLine((finished*1000).ToString() + " finished");
+                Console.WriteLine((finished*10000).ToString() + " finished");
                 
 
                 //Get Harvester AppKeys
-                Coordiante<Int64, double, double> CList = SQLServer.GetCoordinates();
+                Coordiante<Int64, double, double> CList = SQLServer.GetCoordinates((int)(finished*10000));
                 int c = CList.Count();
                 if (c == 0)
                 {
@@ -143,7 +143,7 @@ namespace CopyAndTransform
 
     class SQLServer
     {
-        static public Coordiante<Int64, double, double> GetCoordinates()
+        static public Coordiante<Int64, double, double> GetCoordinates(int idx)
         {
             
             //Create a list to store the result
@@ -164,7 +164,10 @@ namespace CopyAndTransform
             try
             {
                 SqlDataReader myReader = null;
-                SqlCommand myCommand = new SqlCommand("SELECT TOP 1000 [idNearByTimeLine],[geoLAT],[geoLOG] FROM [weibo].[dbo].[NBT2] Where [location] is NULL;",
+                //SqlCommand myCommand = new SqlCommand("SELECT TOP 10000 [idNearByTimeLine],[geoLAT],[geoLOG] FROM [weibo].[dbo].[NBT2] Where [idNearByTimeLine]>" + idx + " AND [location] is NULL;",
+                //                                         myConnection);
+
+                SqlCommand myCommand = new SqlCommand("SELECT TOP 10000 [idNearByTimeLine],[geoLAT],[geoLOG] FROM [weibo].[dbo].[NBT2] WHERE [WGSLatitudeX]IS NULL;",
                                                          myConnection);
                 
                 myReader = myCommand.ExecuteReader();

@@ -27,7 +27,7 @@ namespace CopyAndTransform.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
         [global::System.Configuration.DefaultSettingValueAttribute("user id=username;password=password;server=localhost;Trusted_Connection=yes;databa" +
-            "se=weibo; connection timeout=120")]
+            "se=weibo; connection timeout=3600")]
         public string MSSQL {
             get {
                 return ((string)(this["MSSQL"]));
