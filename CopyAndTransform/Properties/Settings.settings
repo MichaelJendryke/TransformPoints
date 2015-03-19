@@ -5,7 +5,15 @@
     <Setting Name="MSSQL" Type="(Connection string)" Scope="Application">
       <DesignTimeValue Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;SerializableConnectionString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;ConnectionString&gt;user id=username;password=password;server=localhost;Trusted_Connection=yes;database=weibotest2; connection timeout=3600&lt;/ConnectionString&gt;
+&lt;/SerializableConnectionString&gt;</DesignTimeValue>
+      <Value Profile="(Default)">user id=username;password=password;server=localhost;Trusted_Connection=yes;database=weibotest2; connection timeout=3600</Value>
+    </Setting>
+    <Setting Name="MSSQLweiboDEV" Type="(Connection string)" Scope="Application">
+      <DesignTimeValue Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;SerializableConnectionString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
   &lt;ConnectionString&gt;user id=username;password=password;server=localhost;Trusted_Connection=yes;database=weiboDEV; connection timeout=3600&lt;/ConnectionString&gt;
+  &lt;ProviderName /&gt;
 &lt;/SerializableConnectionString&gt;</DesignTimeValue>
       <Value Profile="(Default)">user id=username;password=password;server=localhost;Trusted_Connection=yes;database=weiboDEV; connection timeout=3600</Value>
     </Setting>
