@@ -25,12 +25,13 @@ namespace CopyAndTransform
             int finished = 0;
             while (true)
             {
-                Console.WriteLine((finished*10000).ToString() + " finished");
+                Console.WriteLine( DateTime.Now + "  " + (finished*1000000).ToString() + " finished");
                 
 
                 //Get Harvester AppKeys
-                Coordiante<Int64, double, double> CList = SQLServer.GetCoordinates((int)(finished*10000));
+                Coordiante<Int64, double, double> CList = SQLServer.GetCoordinates((int)(finished*1000000));
                 int c = CList.Count();
+                Console.Write(" " + DateTime.Now + " got " + c + " records.");
                 if (c == 0)
                 {
                     Console.WriteLine("SQL does not deliver any records!!");
@@ -68,10 +69,59 @@ namespace CopyAndTransform
                     
                     for (int i = 0; i < CList.Count(); i++)
                     {
+                        switch (i) {
+                            case 0: {
+                                Console.Write(" 0");
+                                break;
+                            }
+                            case 100000-1: {
+                                Console.Write("..10");
+                                break;
+                            }
+                                case 200000-1: {
+                                Console.Write("..20");
+                                break;
+                            }
+                                case 300000-1: {
+                                Console.Write("..30");
+                                break;
+                            }
+                                case 400000-1: {
+                                Console.Write("..40");
+                                break;
+                            }
+                                case 500000-1: {
+                                Console.Write("..50");
+                                break;
+                            }
+                                case 600000-1: {
+                                Console.Write("..60");
+                                break;
+                            }
+                                case 700000-1: {
+                                Console.Write("..70");
+                                break;
+                            }
+                                case 800000-1: {
+                                Console.Write("..80");
+                                break;
+                            }
+                                case 900000-1: {
+                                Console.Write("..90");
+                                break;
+                            }
+                            case 1000000-1: { 
+                                Console.Write("..100");
+                                break;
+                            }
+                            default: {
+                                    break;
+                                }
+}                        
                         double badLat = CList[i].Item2;
                         double badLog = CList[i].Item3;
                         WGSpoint = transformer.GCJ2WGSExact(badLat, badLog);
-                        string s = "UPDATE [weibo].[dbo].[NBT2] set [WGSLatitudeX]=" + WGSpoint.Lat + ", [WGSLongitudeY]=" + WGSpoint.Lng + ", [location]=geography::STPointFromText('POINT (" + WGSpoint.Lng + " " + WGSpoint.Lat + ")',4326) WHERE [idNearByTimeLine]=" + CList[i].Item1 + ";";
+                        string s = "UPDATE TOP(1) [weiboDEV].[dbo].[NBT2_trans] set [WGSLatitudeX]=" + WGSpoint.Lat + ", [WGSLongitudeY]=" + WGSpoint.Lng + ", [location]=geography::STPointFromText('POINT (" + WGSpoint.Lng + " " + WGSpoint.Lat + ")',4326) WHERE [idNearByTimeLine]=" + CList[i].Item1 + ";";
                         //Console.WriteLine(i.ToString());
                         
                         SqlCommand update = new SqlCommand(s, myConnection);
@@ -167,9 +217,9 @@ namespace CopyAndTransform
                 //SqlCommand myCommand = new SqlCommand("SELECT TOP 10000 [idNearByTimeLine],[geoLAT],[geoLOG] FROM [weibo].[dbo].[NBT2] Where [idNearByTimeLine]>" + idx + " AND [location] is NULL;",
                 //                                         myConnection);
 
-                SqlCommand myCommand = new SqlCommand("SELECT TOP 10000 [idNearByTimeLine],[geoLAT],[geoLOG] FROM [weibo].[dbo].[NBT2] WHERE [WGSLatitudeX]IS NULL;",
+                SqlCommand myCommand = new SqlCommand("SELECT TOP 1000000 [idNearByTimeLine],[geoLAT],[geoLOG] FROM [weiboDEV].[dbo].[NBT2_trans] WHERE [WGSLatitudeX] IS NULL;",
                                                          myConnection);
-                
+                myCommand.CommandTimeout = 600;
                 myReader = myCommand.ExecuteReader();
                 while (myReader.Read())
                 {
