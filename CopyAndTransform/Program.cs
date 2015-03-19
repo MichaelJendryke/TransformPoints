@@ -51,7 +51,6 @@ namespace CopyAndTransform
                 //}
                 //Console.WriteLine(x.ToString()+ " Records.");
 
-
                 //CONNECT
                 SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
                 try
@@ -63,10 +62,15 @@ namespace CopyAndTransform
                     Console.WriteLine(e.ToString());
                 }
 
+                
+
                 //UPDATE
                 try
                 {
-                    
+                    StringBuilder sql = new StringBuilder();
+                    int batchSize = 1000;
+                    int currentBatchCount = 0;
+                    //SqlCommand cmd = null;
                     for (int i = 0; i < CList.Count(); i++)
                     {
                         switch (i) {
@@ -74,6 +78,11 @@ namespace CopyAndTransform
                                 Console.Write(" 0");
                                 break;
                             }
+                            case 10000:
+                                {
+                                    Console.Write(".");
+                                    break;
+                                }
                             case 100000-1: {
                                 Console.Write("..10");
                                 break;
@@ -121,11 +130,63 @@ namespace CopyAndTransform
                         double badLat = CList[i].Item2;
                         double badLog = CList[i].Item3;
                         WGSpoint = transformer.GCJ2WGSExact(badLat, badLog);
-                        string s = "UPDATE TOP(1) [weiboDEV].[dbo].[NBT2_trans] set [WGSLatitudeX]=" + WGSpoint.Lat + ", [WGSLongitudeY]=" + WGSpoint.Lng + ", [location]=geography::STPointFromText('POINT (" + WGSpoint.Lng + " " + WGSpoint.Lat + ")',4326) WHERE [idNearByTimeLine]=" + CList[i].Item1 + ";";
+
+
+
+
+
+                        //string s = "UPDATE TOP(1) [weiboDEV].[dbo].[NBT2_trans] set [WGSLatitudeX]=" + WGSpoint.Lat + ", [WGSLongitudeY]=" + WGSpoint.Lng + ", [location]=geography::STPointFromText('POINT (" + WGSpoint.Lng + " " + WGSpoint.Lat + ")',4326) WHERE [idNearByTimeLine]=" + CList[i].Item1 + ";";
                         //Console.WriteLine(i.ToString());
+                        //Console.WriteLine(s);
+
+                        sql.AppendFormat("UPDATE [weiboDEV].[dbo].[NBT2_trans] set [WGSLatitudeX]={0}, [WGSLongitudeY]={1}, [location]=geography::STPointFromText('POINT ({2} {3})',4326) WHERE [idNearByTimeLine]={4};", WGSpoint.Lat, WGSpoint.Lng, WGSpoint.Lng, WGSpoint.Lat, CList[i].Item1);
                         
-                        SqlCommand update = new SqlCommand(s, myConnection);
-                        update.ExecuteNonQuery();
+
+
+                        //SqlCommand update = new SqlCommand(s, myConnection);
+                        //update.CommandTimeout = 600;
+                        //update.ExecuteNonQuery();
+
+
+                        currentBatchCount++;
+                        //Console.WriteLine(currentBatchCount);
+                        //Console.WriteLine(sql.ToString());
+                        if (currentBatchCount >= batchSize)
+                        {
+                            //Console.WriteLine(sql.ToString());
+                            Console.WriteLine(currentBatchCount.ToString());
+
+                            SqlCommand update = new SqlCommand(sql.ToString(), myConnection);
+                            //cmd.CommandText = sql.ToString();
+                            update.CommandTimeout = 120;
+                            update.ExecuteNonQuery();
+                            sql.Clear();
+                            Console.WriteLine(sql.ToString());
+                            //sql = new StringBuilder();
+                            currentBatchCount = 0;
+                        }
+
+
+
+
+                        //// Create a SqlDataAdapter.
+                        //SqlDataAdapter adapter = new SqlDataAdapter();
+
+                        //// Set the UPDATE command and parameters.
+                        //adapter.UpdateCommand = new SqlCommand("UPDATE Production.ProductCategory SET " + "Name=@Name WHERE ProductCategoryID=@ProdCatID;", connection);
+                        //adapter.UpdateCommand.Parameters.Add("@Name", SqlDbType.NVarChar, 50, "Name");
+                        //adapter.UpdateCommand.Parameters.Add("@ProdCatID", SqlDbType.Int, 4, "ProductCategoryID");
+                        //adapter.UpdateCommand.UpdatedRowSource = UpdateRowSource.None;
+
+
+                        //// Set the batch size.
+                        //adapter.UpdateBatchSize = batchSize;
+
+                        //// Execute the update.
+                        //adapter.Update(dataTable);
+
+
+
                         
                     }
 
