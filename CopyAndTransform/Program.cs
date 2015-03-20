@@ -24,8 +24,11 @@ namespace CopyAndTransform
             EvilTransform.Transform transformer = new EvilTransform.Transform();
             EvilTransform.PointLatLng WGSpoint = new EvilTransform.PointLatLng();
 
-            int finished = 0;
-            int step = 100000;
+            int finished = 56000000;
+            int step = 500000;
+
+            int maxID = int.MaxValue;
+            maxID = finished;
 
             while (true)
             {
@@ -43,6 +46,8 @@ namespace CopyAndTransform
                 //    continue;
                 //}
                 //int x = CList.Count();
+                finished = maxID;
+
 
                 DataTable mytable = new DataTable();
                 //mytable = SQLServer.GetFull100000NBT2table();
@@ -69,6 +74,13 @@ namespace CopyAndTransform
                     row.SetField("location", SqlGeography.Point(WGSpoint.Lat, WGSpoint.Lng, 4326));
                 }
 
+               
+                foreach (DataRow dr in mytable.Rows)
+                {
+                    int accountLevel = dr.Field<int>("idNearByTimeLine");
+                    maxID = Math.Max(maxID, accountLevel);
+                }
+                Console.Write(" ID: " + maxID.ToString());
 
                 //Output datatable
                 //////////////foreach (DataRow row in mytable.Rows)
@@ -81,11 +93,14 @@ namespace CopyAndTransform
                 //////////////}
 
 
-                SQLServer.WRITEDataTableToSQLServer("NBT2_transformed", mytable, "weiboDEV");
+                bool bulk = SQLServer.WRITEDataTableToSQLServer("NBT2_transformed", mytable, "weiboDEV");
+                //SQLServer.WRITEDataTableToSQLServer("NBT2_transformed", mytable, "Weibo");//Timo
 
-                finished = finished + step;
-
-                Console.Write(" finished\n");
+                if (bulk == true)
+                {
+                    finished = finished + step;
+                }
+                Console.Write(" " + bulk.ToString() + " finished\n");
 
                 //for (int i = 0; i < x; i++)
                 //{
@@ -588,7 +603,7 @@ namespace CopyAndTransform
                                     ",[WGSLatitudeX]" +
                                     ",[WGSLongitudeY]" +
                                     ",[location]" +
-                                    " FROM [weibotest2].[dbo].[NBT2] Where [idNearByTimeLine] > " + id.ToString() + ";";
+                                    " FROM [weibotest2].[dbo].[NBT2] Where [idNearByTimeLine] > " + id.ToString() + " order by [idNearByTimeLine] ASC;";
 
 
             //CONNECT
@@ -623,7 +638,9 @@ namespace CopyAndTransform
             try
             {
                 SqlConnection SqlConnectionObj = SQLServer.GetSQLServerConnection(database);
+                
                 SqlBulkCopy bulkCopy = new SqlBulkCopy(SqlConnectionObj, SqlBulkCopyOptions.TableLock | SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction, null);
+                bulkCopy.BulkCopyTimeout = 600;
                 bulkCopy.DestinationTableName = tableName;
                 bulkCopy.WriteToServer(dataTable);
                 isSuccuss = true;
@@ -631,6 +648,7 @@ namespace CopyAndTransform
             catch (Exception ex)
             {
                 isSuccuss = false;
+                Console.WriteLine(ex.ToString());
             }
             return isSuccuss;
 
@@ -915,9 +933,15 @@ namespace CopyAndTransform
            
             
             SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
+            
             //CONNECT
             if (db=="weiboDEV"){
                 myConnection = new SqlConnection(Properties.Settings.Default.MSSQLweiboDEV);
+
+            }
+            if (db == "Weibo")
+            {
+                myConnection = new SqlConnection(Properties.Settings.Default.MSSQLtimo);
 
             }
             //Console.WriteLine(myConnection.ToString());   

@@ -44,5 +44,18 @@ namespace CopyAndTransform.Properties {
                 return ((string)(this["MSSQLweiboDEV"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("user id=username;password=password;server=TIMO-SERVER;Trusted_Connection=yes;data" +
+            "base=Weibo; connection timeout=3600")]
+        public string MSSQLtimo {
+            get {
+                return ((string)(this["MSSQLtimo"]));
+            }
+            set {
+                this["MSSQLtimo"] = value;
+            }
+        }
     }
 }

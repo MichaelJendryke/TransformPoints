@@ -17,5 +17,8 @@
 &lt;/SerializableConnectionString&gt;</DesignTimeValue>
       <Value Profile="(Default)">user id=username;password=password;server=localhost;Trusted_Connection=yes;database=weiboDEV; connection timeout=3600</Value>
     </Setting>
+    <Setting Name="MSSQLtimo" Type="System.String" Scope="User">
+      <Value Profile="(Default)">user id=username;password=password;server=TIMO-SERVER;Trusted_Connection=yes;database=Weibo; connection timeout=3600</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
